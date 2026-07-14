@@ -2,7 +2,6 @@ import argparse
 import json
 import sys
 import os
-import uuid
 import re
 import threading
 from datetime import datetime, timezone

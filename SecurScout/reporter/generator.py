@@ -1,6 +1,6 @@
 import os
 import re
-from typing import Dict, Any, List
+from typing import Dict, Any
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 def generate_remediation_advisory(description: str, product: str) -> str:

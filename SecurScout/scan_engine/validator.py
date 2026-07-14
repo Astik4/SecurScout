@@ -1,7 +1,7 @@
 import ipaddress
 import re
 import socket
-from typing import List, Set
+from typing import List
 
 # Standard hostname regex (RFC 1123)
 HOSTNAME_REGEX = re.compile(
