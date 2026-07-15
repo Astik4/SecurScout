@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecurScout Dashboard</title>
+    <!-- Professional, clean typography standard -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Muted corporate slate & dark gray theme (similar to GitHub Dark / Sentry) */
+            --bg-main: #0d0f14;
+            --bg-sidebar: #11141d;
+            --bg-card: #161b26;
+            --bg-input: #090b10;
+            --border-color: #242c3d;
+            
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            
+            /* Clean risk level colors */
+            --critical: #dc2626;
+            --critical-bg: #fee2e2;
+            --critical-text: #991b1b;
+            
+            --high: #ea580c;
+            --high-bg: #ffedd5;
+            --high-text: #9a3412;
+            
+            --medium: #ca8a04;
+            --medium-bg: #fef9c3;
+            --medium-text: #854d0e;
+            
+            --low: #2563eb;
+            --low-bg: #dbeafe;
+            --low-text: #1e40af;
+            
+            --safe: #16a34a;
+            --safe-bg: #dcfce7;
+            --safe-text: #166534;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation (Slim, compact) */
+        .sidebar {
+            width: 240px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 32px;
+            padding-left: 8px;
+        }
+
+        .brand-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--safe);
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        /* Content Panel */
+        .main-content {
+            flex-grow: 1;
+            padding: 40px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            max-width: 1100px;
+        }
+
+        .section-header {
+            margin-bottom: 28px;
+        }
+
+        .section-header h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin: 0 0 6px 0;
+            color: var(--text-primary);
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        /* Cards (Flat, clean, thin borders) */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Form Layout */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-bottom: 24px;
+            margin-top: 10px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .checkbox-label:hover {
+            color: var(--text-primary);
+        }
+
+        .checkbox-label input {
+            accent-color: var(--accent);
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        /* Status Banners */
+        .status-banner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background-color: rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 14px 18px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Structured Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: rgba(255, 255, 255, 0.01);
+            color: var(--text-muted);
+            font-weight: 600;
+            text-align: left;
+            padding: 12px 14px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.01);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 4px;
+        }
+
+        .badge-critical { background-color: var(--critical-bg); color: var(--critical-text); }
+        .badge-high { background-color: var(--high-bg); color: var(--high-text); }
+        .badge-medium { background-color: var(--medium-bg); color: var(--medium-text); }
+        .badge-low { background-color: var(--low-bg); color: var(--low-text); }
+        .badge-safe { background-color: var(--safe-bg); color: var(--safe-text); }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border-radius: 4px;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-sm:hover {
+            background-color: rgba(255,255,255,0.05);
+            border-color: var(--text-secondary);
+        }
+
+        .btn-primary-sm {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            color: #ffffff;
+        }
+
+        .btn-primary-sm:hover {
+            background-color: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+
+        /* Host details grid */
+        .host-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .host-item-card {
+            background-color: var(--bg-sidebar);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .host-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(5, 5, 8, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+
+        .close-modal {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .vuln-record {
+            background-color: var(--bg-sidebar);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .vuln-record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .remediation-block {
+            background-color: rgba(59, 130, 246, 0.03);
+            border-left: 3px solid var(--accent);
+            color: #93c5fd;
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin-top: 12px;
+            font-size: 0.85rem;
+        }
+
+        /* Custom Toast Notification System */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent);
+            color: var(--text-primary);
+            padding: 16px 20px;
+            border-radius: 6px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.5);
+            font-size: 0.9rem;
+            min-width: 280px;
+            max-width: 400px;
+            pointer-events: auto;
+            animation: slideIn 0.3s ease-out forwards;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .toast-success {
+            border-left-color: var(--safe);
+        }
+
+        .toast-error {
+            border-left-color: var(--critical);
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 12px;
+            line-height: 1;
+        }
+
+        .toast-close:hover {
+            color: var(--text-primary);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand-container">
+            <span class="status-dot"></span>
+            <h2 class="brand-title">SecurScout</h2>
+        </div>
+        <nav class="nav-links">
+            <div class="nav-item active" onclick="switchTab('dashboard-view')">Dashboard</div>
+            <div class="nav-item" onclick="switchTab('history-view')">Scan History</div>
+            <div class="nav-item" onclick="openHelpModal()">User Guide</div>
+        </nav>
+    </aside>
+
+    <!-- Main Panel -->
+    <main class="main-content">
+        
+        <!-- Status Indicator -->
+        <div id="active-scan-banner" class="status-banner" style="display: none;">
+            <div class="spinner"></div>
+            <div style="font-size: 0.9rem;">
+                <strong>Running Vulnerability Scan...</strong>
+                <span style="color: var(--text-secondary); margin-left: 8px;">Targets: <span id="banner-targets"></span></span>
+            </div>
+        </div>
+
+        <!-- 1. Form view -->
+        <section id="dashboard-view" class="tab-content">
+            <div class="section-header">
+                <h1>Target Scan Configuration</h1>
+                <p>Launch audits, map CVEs, and calculate vulnerability exposure risk</p>
+            </div>
+
+            <div class="card">
+                <h2>New Audit Parameters</h2>
+                <form id="scan-form" onsubmit="handleScanSubmit(event)">
+                    <div class="form-group">
+                        <label for="targets">IP Addresses / CIDR Ranges / Hostnames</label>
+                        <input type="text" id="targets" class="form-control" placeholder="192.168.1.15, scanme.nmap.org, 10.0.0.0/24" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="exclude-file">Exclude Targets File (Path)</label>
+                        <input type="text" id="exclude-file" class="form-control" placeholder="C:\Users\gupta\excludes.txt">
+                    </div>
+
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="fast-mode" checked> Fast Scan (Top 100 ports)
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="detect-os"> OS Detection (-O)
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="web-scan"> HTTP Web Vulnerabilities Audit
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn" id="submit-scan-btn">Launch Scan</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 2. History Feed -->
+        <section id="history-view" class="tab-content" style="display: none;">
+            <div class="section-header">
+                <h1>Execution Logs</h1>
+                <p>Vulnerability assessment scan runs saved in the SQLite history database</p>
+            </div>
+
+            <div class="card">
+                <table id="history-table">
+                    <thead>
+                        <tr>
+                            <th>Scan ID</th>
+                            <th>Start Time</th>
+                            <th>Target Parameters</th>
+                            <th>Maximum Risk</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-tbody">
+                        <!-- Filled dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 3. Detail matrix -->
+        <section id="details-view" class="tab-content" style="display: none;">
+            <div class="section-header">
+                <button class="btn-sm" onclick="switchTab('history-view')" style="margin-bottom: 12px;">&larr; Back to Logs</button>
+                <h1 id="details-scan-id">Scan Results</h1>
+                <p id="details-meta">Metadata details for completed audit</p>
+            </div>
+
+            <div class="card">
+                <h2>Asset Risk Index</h2>
+                <div class="host-grid" id="details-host-grid">
+                    <!-- Filled dynamically -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Details Dialog -->
+    <div id="host-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-host-ip">Host Audit Record</h3>
+                <button class="close-modal" onclick="closeHostModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h4 style="margin-top:0; font-size: 0.95rem; text-transform: uppercase; color: var(--text-secondary);">Open Port Bindings</h4>
+                <table style="margin-bottom: 24px;">
+                    <thead>
+                        <tr>
+                            <th>Port / Protocol</th>
+                            <th>State</th>
+                            <th>Service</th>
+                            <th>Product Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modal-ports-tbody">
+                        <!-- Filled dynamically -->
+                    </tbody>
+                </table>
+
+                <h4 style="font-size: 0.95rem; text-transform: uppercase; color: var(--text-secondary);">Vulnerability Logs</h4>
+                <div id="modal-vulns-container">
+                    <!-- Filled dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS Logic -->
+    <!-- Help Dialog -->
+    <div id="help-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>User Guide &amp; FAQ</h3>
+                <button class="close-modal" onclick="closeHelpModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="line-height: 1.5; font-size: 0.9rem; color: var(--text-secondary);">
+                <p>Welcome to the <strong>Vulnerability Scanner Dashboard</strong>! This tool helps you audit systems on your network for open ports and known security vulnerabilities.</p>
+                
+                <h4 style="margin-top: 18px; font-size: 0.95rem; color: #60a5fa; margin-bottom: 6px;">1. How do I start a scan?</h4>
+                <ol style="padding-left: 18px; margin: 0;">
+                    <li>Go to the <strong>Dashboard</strong> page.</li>
+                    <li>Enter target IP addresses, subnets, or hostnames (e.g. <code>192.168.1.15, scanme.nmap.org</code>) separated by commas.</li>
+                    <li>Toggle options:
+                        <ul>
+                            <li><strong>Fast Scan:</strong> Scans the top 100 common ports (saves time).</li>
+                            <li><strong>OS Detection:</strong> Detects system operating system types.</li>
+                            <li><strong>HTTP Web Audit:</strong> Scans web services for SQL injection, XSS, and SSL vulnerabilities.</li>
+                        </ul>
+                    </li>
+                    <li>Click <strong>Launch Scan</strong>. An active blue banner at the top will indicate scan progress.</li>
+                </ol>
+
+                <h4 style="margin-top: 18px; font-size: 0.95rem; color: #60a5fa; margin-bottom: 6px;">2. How do I view results?</h4>
+                <p style="margin: 0;">Go to the <strong>Scan History</strong> tab. Click <strong>Open</strong> to view individual host records and vulnerabilities, or click <strong>Download HTML</strong> to save a detailed, client-ready printable audit report.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pollingInterval = null;
+
+        function showToast(message, type = "info") {
+            let container = document.getElementById("toast-container");
+            if (!container) {
+                container = document.createElement("div");
+                container.id = "toast-container";
+                container.className = "toast-container";
+                document.body.appendChild(container);
+            }
+            
+            const toast = document.createElement("div");
+            toast.className = `toast toast-${type}`;
+            
+            let icon = "ℹ️";
+            if (type === "success") icon = "✅";
+            if (type === "error") icon = "❌";
+            
+            toast.innerHTML = `
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span>${icon}</span>
+                    <span>${message}</span>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.style.animation = "fadeOut 0.5s ease-out forwards";
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.remove();
+                    }
+                }, 500);
+            }, 5000);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadScanHistory();
+            checkScanStatus();
+            pollingInterval = setInterval(checkScanStatus, 3000);
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none");
+            document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+            
+            document.getElementById(tabId).style.display = "block";
+            
+            if (tabId === "dashboard-view") {
+                document.querySelector(".nav-links .nav-item:nth-child(1)").classList.add("active");
+            } else if (tabId === "history-view") {
+                document.querySelector(".nav-links .nav-item:nth-child(2)").classList.add("active");
+                loadScanHistory();
+            }
+        }
+
+        async function loadScanHistory() {
+            try {
+                const res = await fetch("/api/scans");
+                const scans = await res.json();
+                const tbody = document.getElementById("history-tbody");
+                tbody.innerHTML = "";
+                
+                if (scans.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">No scan runs found.</td></tr>`;
+                    return;
+                }
+
+                scans.forEach(scan => {
+                    let badgeClass = "badge-safe";
+                    const score = scan.max_risk_score;
+                    if (score >= 9.0) badgeClass = "badge-critical";
+                    else if (score >= 7.0) badgeClass = "badge-high";
+                    else if (score >= 4.0) badgeClass = "badge-medium";
+                    else if (score >= 0.1) badgeClass = "badge-low";
+
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td><strong>${scan.scan_id.substring(0, 8)}...</strong></td>
+                        <td>${scan.start_time.replace("T", " ").substring(0, 19)}</td>
+                        <td>${scan.targets}</td>
+                        <td><span class="badge ${badgeClass}">${score.toFixed(1)} / 10.0</span></td>
+                        <td>
+                            <button class="btn-sm btn-primary-sm" onclick="viewScanDetails('${scan.scan_id}')">Open</button>
+                            <button class="btn-sm" onclick="downloadReport('${scan.scan_id}')">Download HTML</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error("Error fetching history", err);
+            }
+        }
+
+        async function checkScanStatus() {
+            try {
+                const res = await fetch("/api/scan/status");
+                const status = await res.json();
+                const banner = document.getElementById("active-scan-banner");
+                const submitBtn = document.getElementById("submit-scan-btn");
+
+                if (status.is_running) {
+                    banner.style.display = "flex";
+                    document.getElementById("banner-targets").textContent = status.targets.join(", ");
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = "Scanning...";
+                    }
+                } else {
+                    banner.style.display = "none";
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = "Launch Scan";
+                    }
+                    if (status.last_error) {
+                        showToast("Scan failed: " + status.last_error, "error");
+                    }
+                }
+            } catch (err) {
+                console.error("Error checking status", err);
+            }
+        }
+
+        async function handleScanSubmit(e) {
+            e.preventDefault();
+            const targets = document.getElementById("targets").value;
+            const excludeFile = document.getElementById("exclude-file").value;
+            const fastMode = document.getElementById("fast-mode").checked;
+            const detectOs = document.getElementById("detect-os").checked;
+            const webScan = document.getElementById("web-scan").checked;
+
+            try {
+                const res = await fetch("/api/scan", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        targets: targets,
+                        exclude_file: excludeFile ? excludeFile : null,
+                        fast_mode: fastMode,
+                        detect_os: detectOs,
+                        web_scan: webScan
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    showToast("Scan task started in background.", "success");
+                    switchTab("history-view");
+                    checkScanStatus();
+                } else {
+                    showToast("Scan launch error: " + data.error, "error");
+                }
+            } catch (err) {
+                showToast("Network error launching scan.", "error");
+            }
+        }
+
+        function downloadReport(scanId) {
+            window.open(`/api/scans/${scanId}/report`, "_blank");
+        }
+
+        let currentActiveScanResults = null;
+
+        async function viewScanDetails(scanId) {
+            try {
+                const res = await fetch(`/api/scans/${scanId}`);
+                if (!res.ok) throw new Error("Not found");
+                const results = await res.json();
+                
+                currentActiveScanResults = results;
+                
+                switchTab("details-view");
+                document.getElementById("details-scan-id").textContent = `Scan results: ${scanId.substring(0, 8)}`;
+                document.getElementById("details-meta").textContent = `Targets: ${results.scan_metadata.targets.join(", ")} | Date: ${results.scan_metadata.start_time.replace("T", " ").substring(0, 19)}`;
+
+                const hostGrid = document.getElementById("details-host-grid");
+                hostGrid.innerHTML = "";
+
+                results.hosts.forEach((host, idx) => {
+                    const tier = host.host_risk_tier.toLowerCase();
+                    const card = document.createElement("div");
+                    card.className = "host-item-card";
+                    
+                    let riskColor = "var(--blue-low)";
+                    if (tier === "critical") riskColor = "var(--critical)";
+                    else if (tier === "high") riskColor = "var(--high)";
+                    else if (tier === "medium") riskColor = "var(--medium)";
+                    else if (tier === "none") riskColor = "var(--safe)";
+
+                    card.style.borderLeft = `4px solid ${riskColor}`;
+                    card.innerHTML = `
+                        <div>
+                            <div class="host-card-header">
+                                <strong style="font-size: 0.95rem;">${host.ip}</strong>
+                                <span class="badge badge-${tier}">${host.host_risk_tier}</span>
+                            </div>
+                            <div style="font-size: 0.85rem; color:var(--text-secondary); line-height: 1.4;">
+                                OS: ${host.os}<br>
+                                Ports Open: ${host.ports.length}<br>
+                                Risk Score: <strong>${host.host_risk_score.toFixed(1)} / 10.0</strong>
+                            </div>
+                        </div>
+                        <button class="btn-sm" style="margin-top: 12px; width: 100%;" onclick="openHostDetails(${idx})">View Findings</button>
+                    `;
+                    hostGrid.appendChild(card);
+                });
+
+            } catch (err) {
+                showToast("Failed to load details: " + err.message, "error");
+            }
+        }
+
+        function openHostDetails(hostIdx) {
+            if (!currentActiveScanResults) return;
+            const host = currentActiveScanResults.hosts[hostIdx];
+
+            document.getElementById("modal-host-ip").textContent = `Audit Records: ${host.ip} (${host.hostnames.join(", ") || "No hostname"})`;
+            
+            const portsTbody = document.getElementById("modal-ports-tbody");
+            portsTbody.innerHTML = "";
+            host.ports.forEach(port => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><strong>${port.port} / ${port.protocol.toUpperCase()}</strong></td>
+                    <td><span style="color:var(--safe); font-weight:600;">${port.state.toUpperCase()}</span></td>
+                    <td>${port.service.name}</td>
+                    <td>${port.service.product || "Unknown"} ${port.service.version}</td>
+                `;
+                portsTbody.appendChild(tr);
+            });
+
+            const vulnsContainer = document.getElementById("modal-vulns-container");
+            vulnsContainer.innerHTML = "";
+
+            let hasVulns = false;
+            host.ports.forEach(port => {
+                if (port.vulnerabilities && port.vulnerabilities.length > 0) {
+                    hasVulns = true;
+                    port.vulnerabilities.forEach(v => {
+                        const card = document.createElement("div");
+                        card.className = "vuln-record";
+                        
+                        let tierClass = "badge-low";
+                        const risk = v.risk_tier.toLowerCase();
+                        if (risk === "critical") tierClass = "badge-critical";
+                        else if (risk === "high") tierClass = "badge-high";
+                        else if (risk === "medium") tierClass = "badge-medium";
+
+                        let remediationText = v.remediation || `Apply the latest vendor patches for ${port.service.product || 'the running service'}.`;
+
+                        card.innerHTML = `
+                            <div class="vuln-record-header">
+                                <span style="color: #60a5fa;">${v.id}</span>
+                                <span class="badge ${tierClass}">${v.risk_tier} (Score: ${v.cvss_score.toFixed(1)})</span>
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">
+                                Port: ${port.port}/${port.protocol.toUpperCase()} (${port.service.product}) | Source: ${v.source}
+                            </div>
+                            <div style="font-size: 0.9rem; line-height: 1.4; color: var(--text-secondary); margin-bottom: 10px;">
+                                ${v.description}
+                            </div>
+                            <div class="remediation-block">
+                                <strong>Suggested Action:</strong> ${remediationText}
+                            </div>
+                        `;
+                        vulnsContainer.appendChild(card);
+                    });
+                }
+            });
+
+            if (!hasVulns) {
+                vulnsContainer.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding: 16px; font-size: 0.9rem;">No vulnerabilities detected on open ports.</div>`;
+            }
+
+            document.getElementById("host-modal").style.display = "flex";
+        }
+
+        function closeHostModal() {
+            document.getElementById("host-modal").style.display = "none";
+        }
+
+        function openHelpModal() {
+            document.getElementById("help-modal").style.display = "flex";
+        }
+
+        function closeHelpModal() {
+            document.getElementById("help-modal").style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            const hostModal = document.getElementById("host-modal");
+            const helpModal = document.getElementById("help-modal");
+            if (event.target == hostModal) {
+                hostModal.style.display = "none";
+            }
+            if (event.target == helpModal) {
+                helpModal.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
