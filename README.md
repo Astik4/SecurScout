@@ -27,10 +27,11 @@ To perform live network scans, Nmap must be installed on the host system:
 
 ### 2. Clone and Setup
 1. Clone this repository to your local machine.
-2. Install the Python dependencies:
+2. Install the package system-wide in editable mode:
    ```bash
-   pip install -r requirements.txt
+   pip install -e .
    ```
+   This automatically installs all package dependencies (Flask, Requests, Jinja2) and registers the system-wide executable command **`securscout`**.
 3. Create a `.env` file in the root directory to store your NVD API Key (optional, increases API rate limits):
    ```text
    NVD_API_KEY=your_nvd_api_key_here
@@ -41,33 +42,37 @@ To perform live network scans, Nmap must be installed on the host system:
 ## 🚀 How to Run
 
 ### 1. Launch the Web UI Dashboard
-To boot the local web server and automatically open the analyst console in your default browser, run:
+To boot the local web server and automatically open the analyst console in your default browser, run from any folder:
 ```bash
-python -m SecurScout --web
+securscout --web
 ```
-*(On Windows, you can simply double-click the **`run_dashboard.bat`** file).*
+*(On Windows, you can also run `python -m SecurScout --web` from the project directory or double-click the **`run_dashboard.bat`** file).*
 
 ### 2. Command Line Interface (CLI) Examples
 
+> [!NOTE]  
+> Running a CLI scan will automatically compile the findings into a client-ready HTML report (defaulting to `securscout_report.html`) and open it in your default web browser immediately.
+> By default, scans bypass ping discovery sweep (`-Pn`) and run in standard user-space TCP Connect mode (`-sT`), meaning scans work flawlessly against firewalled virtual machines (like Metasploitable 2) without requiring root or Administrator terminal elevation.
+
 * **Display Help Options:**
   ```bash
-  python -m SecurScout --help
+  securscout --help
   ```
-* **Fast Network Scan (Outputs JSON):**
+* **Fast Network Scan (Bypasses pings and runs top 100 ports):**
   ```bash
-  python -m SecurScout 192.168.1.15 --fast
+  securscout 192.168.1.15 -f
   ```
-* **Scan & Generate HTML Report:**
+* **Scan & Generate Specific HTML Report:**
   ```bash
-  python -m SecurScout 192.168.1.0/24 --html report.html
+  securscout 192.168.1.0/24 --html report.html
   ```
-* **Intensive Web-Scan with OS Detection:**
+* **Intensive Web-Scan with OS Detection (OS detection requires admin/sudo privileges):**
   ```bash
-  python -m SecurScout scanme.nmap.org -O --web-scan --html web_report.html
+  securscout scanme.nmap.org -O --web-scan --html web_report.html
   ```
 * **View Past Scan Logs from SQLite History:**
   ```bash
-  python -m SecurScout --history
+  securscout --history
   ```
 
 ---
