@@ -2,8 +2,13 @@ import argparse
 import json
 import sys
 import os
+
+# Add parent directory to sys.path to support direct execution (python SecurScout/main.py)
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import re
 import threading
+import uuid
 from datetime import datetime, timezone
 from typing import List
 
