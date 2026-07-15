@@ -30,7 +30,8 @@ class NmapWrapper:
         fast_mode: bool = True,
         detect_os: bool = False,
         exclude_file: Optional[str] = None,
-        web_scan: bool = False
+        web_scan: bool = False,
+        skip_discovery: bool = False
     ) -> str:
         """
         Execute Nmap scan via subprocess and return the XML output string.
@@ -61,6 +62,7 @@ class NmapWrapper:
         cmd = [self.nmap_path]
         
         # Add scan parameters
+        cmd.append("-sT")  # TCP Connect scan (no Administrator privileges required)
         cmd.append("-sV")  # Service version detection
         
         if fast_mode:
@@ -74,6 +76,8 @@ class NmapWrapper:
             
         if web_scan:
             cmd.append("--script=vuln,http-vuln-*")
+            
+        cmd.append("-Pn")  # Always assume host is online (bypasses ping sweep blocks)
             
         cmd.extend(["-oX", "-"])  # Output XML directly to stdout
         

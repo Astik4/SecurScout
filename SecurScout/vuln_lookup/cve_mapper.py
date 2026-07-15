@@ -130,8 +130,8 @@ class CVEMapper:
         try:
             return self._query_nvd_cpe(cpe)
         except Exception as e:
-            sys.stderr.write(f"[WARNING] NVD CPE lookup failed ({e}). Falling back to CIRCL.\n")
-            return self._query_circl_cpe(cpe)
+            sys.stderr.write(f"[WARNING] NVD CPE lookup failed ({e}).\n")
+            return []
 
     def _lookup_keyword(self, product: str, version: str) -> List[Dict[str, Any]]:
         """Query external APIs using a keyword search (fallback)."""
@@ -142,12 +142,12 @@ class CVEMapper:
         try:
             return self._query_nvd_keyword(keyword)
         except Exception as e:
-            sys.stderr.write(f"[WARNING] NVD keyword lookup failed ({e}). Falling back to CIRCL.\n")
-            return self._query_circl_keyword(product, version)
+            sys.stderr.write(f"[WARNING] NVD keyword lookup failed ({e}).\n")
+            return []
 
     def _get_headers(self) -> Dict[str, str]:
         headers = {
-            "User-Agent": "VulnerabilityAssessmentTool/1.0 (Python; Requests)"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
         if self.api_key:
             headers["apiKey"] = self.api_key
@@ -171,6 +171,9 @@ class CVEMapper:
             
             if response.status_code == 200:
                 return self._parse_nvd_response(response.json())
+            elif response.status_code == 404:
+                # CPE does not exist in NVD database, return empty list instead of throwing error
+                return []
             elif response.status_code in (403, 429) and attempt == 0:
                 # Throttled, sleep briefly and retry
                 sys.stderr.write("[WARNING] NVD API rate-limit hit. Retrying in 2 seconds...\n")
@@ -199,6 +202,9 @@ class CVEMapper:
             
             if response.status_code == 200:
                 return self._parse_nvd_response(response.json())
+            elif response.status_code == 404:
+                # Keyword does not match anything in NVD, return empty list
+                return []
             elif response.status_code in (403, 429) and attempt == 0:
                 sys.stderr.write("[WARNING] NVD API rate-limit hit. Retrying in 2 seconds...\n")
                 time.sleep(2)

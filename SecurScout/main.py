@@ -11,6 +11,7 @@ import threading
 import uuid
 from datetime import datetime, timezone
 from typing import List
+import webbrowser
 
 from SecurScout.scan_engine.validator import validate_and_filter_targets
 from SecurScout.scan_engine.nmap_wrapper import NmapWrapper
@@ -97,9 +98,11 @@ Usage Examples:
         help="Attempt OS detection (requires administrative/root privileges)."
     )
     parser.add_argument(
-        "--nvd-key",
-        help="NVD API key. Can also be set via the NVD_API_KEY environment variable."
+        "-Pn", "--skip-discovery",
+        action="store_true",
+        help="Treat all hosts as online -- bypass host discovery (ping sweep)."
     )
+    
     parser.add_argument(
         "--fallback-circl",
         action="store_true",
@@ -164,7 +167,6 @@ Usage Examples:
 
     # Handle Web UI Launcher
     if args.web:
-        import webbrowser
         import socket
         
         # Helper to resolve local network IP
@@ -192,7 +194,7 @@ Usage Examples:
             sys.stderr.write(f"[INFO] Local Access:   http://{args.host}:5000/\n")
             sys.stderr.write(f"==========================================================\n\n")
         
-        app = create_app(db_path=args.db_path, nvd_key=args.nvd_key)
+        app = create_app(db_path=args.db_path, nvd_key=os.environ.get("NVD_API_KEY"))
         
         def open_browser():
             import time
@@ -272,7 +274,8 @@ Usage Examples:
             fast_mode=args.fast,
             detect_os=args.detect_os,
             exclude_file=args.exclude_file,
-            web_scan=args.web_scan
+            web_scan=args.web_scan,
+            skip_discovery=args.skip_discovery
         )
     except Exception as e:
         sys.stderr.write(f"\n[ERROR] Scan execution failed: {e}\n")
@@ -289,7 +292,7 @@ Usage Examples:
     parsed_results["scan_metadata"]["start_time"] = start_time_iso
 
     # 4. Map CVEs for each identified service
-    nvd_key = args.nvd_key or os.environ.get("NVD_API_KEY")
+    nvd_key = os.environ.get("NVD_API_KEY")
     sys.stderr.write("\n[INFO] Initializing CVE Lookup & Vulnerability Mapping...\n")
     mapper = CVEMapper(api_key=nvd_key, force_circl=args.fallback_circl, db_manager=db_mgr)
     
@@ -399,30 +402,33 @@ Usage Examples:
     except Exception as e:
         sys.stderr.write(f"[WARNING] Failed to write scan to history: {e}\n")
 
-    # 7. Generate HTML Report
-    if args.html:
-        sys.stderr.write(f"\n[INFO] Generating HTML report...\n")
-        try:
-            generator = ReportGenerator()
-            generator.render_report(parsed_results, args.html)
-            sys.stderr.write(f"[SUCCESS] Report successfully generated and saved to {args.html}\n")
-        except Exception as e:
-            sys.stderr.write(f"[ERROR] Failed to generate HTML report: {e}\n")
+    # 7. Generate and open HTML Report
+    html_path = args.html if args.html else "securscout_report.html"
+    sys.stderr.write(f"\n[INFO] Compiling HTML report...\n")
+    try:
+        generator = ReportGenerator()
+        generator.render_report(parsed_results, html_path)
+        sys.stderr.write(f"[SUCCESS] Report successfully generated and saved to: {os.path.abspath(html_path)}\n")
+        
+        # Open in default browser
+        report_url = "file://" + os.path.abspath(html_path)
+        sys.stderr.write(f"[INFO] Opening report in default web browser...\n")
+        webbrowser.open(report_url)
+    except Exception as e:
+        sys.stderr.write(f"[ERROR] Failed to compile HTML report: {e}\n")
 
-    # 8. Output Results
+    # 8. Output JSON Results if requested
     json_output = json.dumps(parsed_results, indent=2)
-    
     if args.output:
         try:
             with open(args.output, "w") as f:
                 f.write(json_output)
-            sys.stderr.write(f"\n[SUCCESS] Scan complete. Results saved to {args.output}\n")
+            sys.stderr.write(f"[SUCCESS] JSON results saved to {args.output}\n")
         except IOError as e:
-            sys.stderr.write(f"\n[ERROR] Failed to write output file: {e}\n")
+            sys.stderr.write(f"[ERROR] Failed to write JSON output: {e}\n")
             sys.exit(1)
     else:
-        print(json_output)
-        sys.stderr.write("\n[SUCCESS] Scan complete.\n")
+        sys.stderr.write("\n[SUCCESS] Scan execution complete.\n")
 
 if __name__ == "__main__":
     main()

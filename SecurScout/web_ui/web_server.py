@@ -56,7 +56,8 @@ def execute_background_scan(
     exclude_file: str,
     web_scan: bool,
     db_path: str,
-    nvd_key: str = None
+    nvd_key: str = None,
+    skip_discovery: bool = False
 ):
     """Orchestrates scanner engine pipeline inside a separate thread."""
     global scan_status
@@ -82,7 +83,8 @@ def execute_background_scan(
             fast_mode=fast_mode,
             detect_os=detect_os,
             exclude_file=exclude_file,
-            web_scan=web_scan
+            web_scan=web_scan,
+            skip_discovery=skip_discovery
         )
         
         # 3. XML Parsing
@@ -275,11 +277,12 @@ def create_app(db_path: str = "vulnerability_scanner.db", template_folder: str =
         exclude_file = data.get("exclude_file", None)
         
         scan_id = str(uuid.uuid4())
+        skip_discovery = data.get("skip_discovery", False)
         
         # Execute active scan on background daemon thread
         thread = threading.Thread(
             target=execute_background_scan,
-            args=(scan_id, targets, fast_mode, detect_os, exclude_file, web_scan, db_path, resolved_nvd_key)
+            args=(scan_id, targets, fast_mode, detect_os, exclude_file, web_scan, db_path, resolved_nvd_key, skip_discovery)
         )
         thread.daemon = True
         thread.start()
