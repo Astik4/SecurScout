@@ -56,6 +56,13 @@ By proceeding, you represent that you have obtained all necessary consents.
 ================================================================================\n"""
 
 def main(argv: List[str] = None):
+    try:
+        _main_impl(argv)
+    except KeyboardInterrupt:
+        sys.stderr.write("\n\n[INFO] Scan aborted by user (Ctrl+C). Exiting cleanly...\n")
+        sys.exit(130)
+
+def _main_impl(argv: List[str] = None):
     # Print legal disclaimer to stderr so it does not pollute stdout redirected output
     sys.stderr.write(LEGAL_NOTICE)
     
