@@ -203,19 +203,23 @@ Usage Examples:
         
         app = create_app(db_path=args.db_path, nvd_key=os.environ.get("NVD_API_KEY"))
         
-        def open_browser():
-            import time
-            time.sleep(1.5)
-            sys.stderr.write("[INFO] Opening browser for local dashboard access...\n")
-            webbrowser.open(f"http://{args.host if args.host != '0.0.0.0' else '127.0.0.1'}:5000/")
-            
-        t = threading.Thread(target=open_browser)
-        t.daemon = True
-        t.start()
+        port = int(os.environ.get("PORT", 5000))
+        is_headless = sys.platform != "win32" and not os.environ.get("DISPLAY")
+        
+        if not is_headless and not os.environ.get("RENDER"):
+            def open_browser():
+                import time
+                time.sleep(1.5)
+                sys.stderr.write("[INFO] Opening browser for local dashboard access...\n")
+                webbrowser.open(f"http://{args.host if args.host != '0.0.0.0' else '127.0.0.1'}:{port}/")
+                
+            t = threading.Thread(target=open_browser)
+            t.daemon = True
+            t.start()
         
         try:
-            # Bind to configured host (default: 127.0.0.1 for local security)
-            app.run(host=args.host, port=5000, debug=False)
+            # Bind to configured host and dynamic port (default: 5000)
+            app.run(host=args.host, port=port, debug=False)
         except KeyboardInterrupt:
             sys.stderr.write("\n[INFO] Web UI Server stopped.\n")
         sys.exit(0)
