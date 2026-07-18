@@ -1,7 +1,7 @@
 # SecurScout 🔍
 ### **An Automated Service & CVE Vulnerability Auditor**
 
-SecurScout is a portfolio-grade security scanner and reporting tool designed for automated network scoping, port auditing, service version mapping, and prioritized risk profiling. It combines the speed of Nmap network discovery with context-weighted CVSS risk calculations, SQLite history tracking, and a local browser-based security dashboard.
+SecurScout is a portfolio-grade vulnerability scanner and reporting tool designed for automated network scoping, port auditing, service version mapping, and prioritized risk profiling. It combines the speed of Nmap network discovery with context-weighted CVSS risk calculations, SQLite history tracking, and a local browser-based security dashboard.
 
 ---
 
